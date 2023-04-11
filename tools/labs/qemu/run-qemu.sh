@@ -13,6 +13,9 @@ kernel=${ZIMAGE:-"$(readlink -f "$base_dir/../../arch/$arch/boot/bzImage")"}
 rootfs=${ROOTFS:-"$(readlink -f "$base_dir/rootfs")"}
 skels=${SKELS:-"$(readlink -f "$base_dir/skels")"}
 
+QEMU_BKGRND="-daemonize"
+CHECKER=0
+
 mode="${MODE:-console}"
 case "$mode" in
     console)
@@ -23,6 +26,11 @@ case "$mode" in
 	    # QEMU_DISPLAY = sdl, gtk, ...
 	    qemu_display="-display ${QEMU_DISPLAY:-"sdl"}"
 	    linux_console=""
+	    ;;
+    checker)
+	    qemu_display="-display none"
+            QEMU_BKGRND=""
+	    CHECKER=1
 	    ;;
     *) echo "unknown mode '$MODE'" >&2; exit 1 ;;
 esac
@@ -100,6 +108,7 @@ mkdir -p "$skels"
 
 "$qemu" \
     $qemu_kvm \
+    $QEMU_BKGRND \
     -pidfile $QEMU_PIDFILE \
     -device virtio-serial -chardev socket,id=virtiocon0,path=serial_console.socket,server,nowait -device virtconsole,chardev=virtiocon0 \
     -smp "$qemu_cpus" -m "$qemu_mem" \
@@ -112,10 +121,12 @@ mkdir -p "$skels"
     -drive file=disk2.img,if=virtio,format=raw \
     -gdb tcp::1234 \
     $qemu_display \
-    $qemu_addopts &
+    $qemu_addopts
 
 sleep 2
-minicom -D unix\#serial_console.socket
+if [[ $CHECKER != 1 ]]; then
+	minicom -D unix\#serial_console.socket
+fi
 # This seems to reset to the mode the terminal was prior to launching QEMU
 # Inspired by
 # https://github.com/landley/toybox/blob/990e0e7a40e4509c7987a190febe5d867f412af6/toys/other/reset.c#L26-L28

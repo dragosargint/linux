@@ -116,6 +116,9 @@ YOCTO_ROOTFS = core-image-minimal-qemu$(ARCH).tar.bz2
 console: $(ZIMAGE) rootfs disk1.img disk2.img pipe1.in pipe1.out pipe2.in pipe2.out
 	MODE=console qemu/run-qemu.sh
 
+checker: $(ZIMAGE) rootfs disk1.img disk2.img pipe1.in pipe1.out pipe2.in pipe2.out
+	MODE=checker qemu/run-qemu.sh
+
 gui: $(ZIMAGE) rootfs disk1.img disk2.img pipe1.in pipe1.out pipe2.in pipe2.out
 	MODE=gui qemu/run-qemu.sh
 
